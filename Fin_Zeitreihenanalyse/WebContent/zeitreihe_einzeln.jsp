@@ -15,7 +15,7 @@
 	<script>
 		var app = angular.module('ionicApp',[]);
 		app.controller('testController', function($scope,$http) {
-			$scope.names; 
+			$scope.names;
 			$scope.abrufen = function() {
 				var start = formattedDate($scope.startdatum);
 				var ende = 	formattedDate($scope.enddatum);
