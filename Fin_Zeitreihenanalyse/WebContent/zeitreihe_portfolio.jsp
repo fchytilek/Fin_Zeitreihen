@@ -90,8 +90,44 @@
 						
 					}
 				}
-			};			
+			};
+			
+			//Berechnung des durchschnittlichen Rendite des AdjustedClose
+			$scope.durchschnRend = function(){
+				var durch=0;
+				for(var i=$scope.names_portfolio.length-2;i>=0;i--){
+					durch+=Math.log( Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close) );
+				}
+				durch = durch/($scope.names_portfolio.length-1);
+				return durch;
+			}
+			//Berechnung der Volatilität des AdjustedClose
+			$scope.volatilitaet = function(){
+				var durchschnRend=$scope.durchschnRend();
+				
+				var standAbwKumuliert=0;
+				for(var i=$scope.names_portfolio.length-2;i>=0;i--){
+					standAbwKumuliert += (Math.log(Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close))-durchschnRend)*(Math.log(Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close))-durchschnRend);
+					
+				}
+				
+				standAbwKumuliert=standAbwKumuliert/($scope.names_portfolio.length - 2);
+				
+				standAbwKumuliert = Math.sqrt(standAbwKumuliert);
+				
+				
+				return standAbwKumuliert;
+			}
+			
+			
+		});//app.controller
+		
+		app.filter('prozent', function($filter) {
+		    return function(input) {
+		        return $filter('number')(input*100, 2)+'%';
+		    }
 		});
+		
 		
 		
 		function formattedDate(date) {
@@ -173,6 +209,9 @@
 					</tr>
 				</table>		
 			</form>
+			
+			<p>Durchschnittsrendite des Portfolios: {{durchschnRend() | prozent}}</p>
+	 		<p>Volatilität des Portfolios: {{volatilitaet() | prozent}}</p>
 			
 			<h3>Aktienkurse für das Portfolio</h3>	
 			

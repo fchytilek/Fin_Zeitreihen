@@ -23,7 +23,59 @@
 				$http.get("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.historicaldata%20where%20symbol%20%3D%20%22"+$scope.name+"%22%20and%20startDate%20%3D%20%22"+start+"%22%20and%20endDate%20%3D%20%22"+ende+"%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=")
 				.then(function(response) {$scope.names = response.data.query.results.quote;});
 			}
+		
+		//Berechnung des durchschnittlichen Rendite des AdjustedClose
+				$scope.durchschnRend = function(){
+					if($scope.names==null)
+						return 0;
+					
+					var durch=0;
+					for(var i=$scope.names.length-2;i>=0;i--){
+						durch+=Math.log( Number($scope.names[i].Adj_Close)/Number($scope.names[i+1].Adj_Close) );
+					}
+					durch = durch/($scope.names.length-1);
+					return durch;
+				}
+				
+			//Berechnung der Volatilität des AdjustedClose(Der Standardabweichung der Renditen)
+				$scope.volatilitaet = function(){
+					if($scope.names==null)
+						return 0;
+					
+					var durchschnRend=$scope.durchschnRend();
+					var aktien = [];
+					var rend = [];
+					var standAbwKumuliert=0;
+					
+					for(var i=$scope.names.length-1;i>=0;i--){
+						aktien.push($scope.names[i].Adj_Close);
+					}
+					
+					for(var i=0;i<$scope.names.length-1;i++){
+						rend.push(  Math.log( Number(aktien[i+1])/Number(aktien[i]) )  );
+						
+					}
+					for(var i=0;i<rend.length;i++){
+						standAbwKumuliert += (rend[i]-durchschnRend)*(rend[i]-durchschnRend);
+					}
+					standAbwKumuliert=standAbwKumuliert/rend.length;
+					
+					standAbwKumuliert = Math.sqrt(standAbwKumuliert);
+					
+					
+					return standAbwKumuliert;
+				}
+			
 		});
+		
+		app.filter('prozent', function($filter) {
+		    return function(input) {
+		        return $filter('number')(input*100, 2)+'%';
+		    }
+		});
+		
+		
+		
 		
 		
 		function formattedDate(date) {
@@ -68,6 +120,9 @@
 				</button>
 					
 			</form>
+			
+			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
+	 		<p>Volatilität: {{volatilitaet() | prozent}}</p>
 			
 			<h3>Aktienkurse</h3>	
 			
