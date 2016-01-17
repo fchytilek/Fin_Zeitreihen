@@ -19,6 +19,7 @@
 			$scope.names2;
 			$scope.names_portfolio = [];
 			$scope.abrufen_portfolio = function() {
+				$scope.names_portfolio = [];
 				var start = formattedDate($scope.startdatum);
 				var ende = 	formattedDate($scope.enddatum);				
 						
@@ -58,7 +59,7 @@
 							//Element mit Gewichtung entsprechenden Werte erzeugen und zum Array names_portfolio hinzufügen
 							var element = {};
 							element.Date = $scope.names1[index1].Date;
-							element.Adj_Close = (($scope.names1[index1].Adj_Close * ($scope.gewichtung1/100)) + ($scope.names2[index2].Adj_Close * ($scope.gewichtung2/100)));
+							element.Adj_Close = (($scope.names1[index1].Adj_Close * ($scope.gewichtung1/100)) + ($scope.names2[index2].Adj_Close * ($scope.gewichtung2/100)));							
 							$scope.names_portfolio.push(element);
 							//Beide Werte werden inkrementiert
 							increment1 = true;
@@ -117,6 +118,15 @@
 				
 				
 				return standAbwKumuliert;
+			}		
+		
+			//Array aller Renditen berechnen
+			$scope.renditen = function() {
+				var renditen = [];
+				for (var i = $scope.names_portfolio.length-2 ;i >= 0; i--){
+					renditen.push(Math.log( Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close) ));
+				}
+ 				return renditen;				
 			}
 			
 			
@@ -153,7 +163,7 @@
 
 	<div class="container theme-showcase" ng-controller="testController">
 		<div class="jumbotron">
-			<form>
+			<form >
 				<table class="table">
 					<tr>
 						<td>
@@ -206,8 +216,22 @@
 						<td colspan="2" style="text-align:center;border:1px solid red">
 							Wichtig! : Gewichtung 1 + Gewichtung 2 = 100!	
 						</td>
+					</tr>					
+				</table>				
+			</form>
+			<form action="MainServlet" method="get">
+				<input type="hidden" name="renditen" value="{{renditen()}}">
+				<input type="hidden" name="standardabweichung" value="{{volatilitaet()}}">
+				<input type="hidden" name="erwartungswert" value="{{durchschnRend()}}">
+				<table class="table">
+					<tr>
+						<td style="text-align:center">
+							<button  style="width:100%" class="btn-success"">
+								Auf Normalverteilung prüfen						
+							</button>
+						</td>
 					</tr>
-				</table>		
+				</table>
 			</form>
 			
 			<p>Durchschnittsrendite des Portfolios: {{durchschnRend() | prozent}}</p>

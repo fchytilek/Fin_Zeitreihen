@@ -65,6 +65,14 @@
 					
 					return standAbwKumuliert;
 				}
+				//Array aller Renditen berechnen
+				$scope.renditen = function() {
+					var renditen = [];
+					for (var i = $scope.name.length-2 ;i >= 0; i--){
+						renditen.push(Math.log( Number($scope.names[i].Adj_Close)/Number($scope.names[i+1].Adj_Close) ));
+					}
+	 				return renditen;				
+				}
 			
 		});
 		
@@ -120,7 +128,20 @@
 				</button>
 					
 			</form>
-			
+			<form action="MainServlet" method="get">
+				<input type="hidden" name="renditen" value="{{renditen()}}">
+				<input type="hidden" name="standardabweichung" value="{{volatilitaet()}}">
+				<input type="hidden" name="erwartungswert" value="{{durchschnRend()}}">
+				<table class="table">
+					<tr>
+						<td style="text-align:center">
+							<button  style="width:100%" class="btn-success"">
+								Auf Normalverteilung prüfen						
+							</button>
+						</td>
+					</tr>
+				</table>
+			</form>
 			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
 	 		<p>VolatilitÃ¤t: {{volatilitaet() | prozent}}</p>
 			
