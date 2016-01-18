@@ -15,6 +15,8 @@
 	<script>
 		var app = angular.module('ionicApp',[]);
 		app.controller('testController', function($scope,$http) {
+			$scope.startdatum="2015-12-01";
+			$scope.enddatum="2016-01-17";
 			$scope.names;
 			$scope.abrufen = function() {
 				var start = formattedDate($scope.startdatum);
@@ -73,6 +75,37 @@
 					}
 	 				return renditen;				
 				}
+				
+				
+				//Berechnung der Autokorrelation
+				$scope.autokorrelation = function(){
+					
+					if($scope.names==null)
+						return 0;
+				
+					var aktienNormal = [];
+					var aktienVersetzt = [];//um eins zeitversetzt
+					var kovarianzBeider = [];
+					
+					for(var i=0;i<$scope.names.length-1;i++){
+						aktienNormal.push($scope.names[i].Adj_Close);
+					}
+					
+					for(var i=1;i<$scope.names.length;i++){
+						aktienVersetzt.push($scope.names[i].Adj_Close);
+					}
+					
+					var mittwertNormal = mittelwert(aktienNormal);
+					var mittwertVersetzt = mittelwert(aktienVersetzt);
+					
+					for(var i=0;i<aktienVersetzt.length;i++){
+						kovarianzBeider.push((aktienNormal[i]-mittwertNormal)*(aktienVersetzt[i]-mittwertVersetzt));
+					}
+					
+					//alert("Mittelwert von Normal: "+mittelwert(aktienNormal)+", von Versetzt: "+mittelwert(aktienVersetzt)+"\nKovar von "+aktienNormal[0]+" und "+aktienVersetzt[0]+" = "+kovarianzBeider[0]);
+					
+					return mittelwert(kovarianzBeider)/(stdAbw(aktienNormal)*stdAbw(aktienVersetzt));
+				}
 			
 		});
 		
@@ -97,6 +130,39 @@
 		
 		    return [year, month, day].join('-');
 		}
+		
+		//Berechnung des Mittelwertes
+		function mittelwert(liste){
+			if(liste==null)
+				return 0;	
+			
+			var durchschnitt=0;
+			
+			for(var i=0;i<liste.length;i++){
+				durchschnitt+=Number(liste[i]);
+			}
+			durchschnitt = durchschnitt/liste.length;
+			return durchschnitt;
+		}
+
+		//Berechnung der Standardabw
+		function stdAbw(liste){
+			
+			if(liste==null)
+				return 0;	
+			
+			var zwischen=0;
+			var mittel=mittelwert(liste);
+			
+			for(var i=0;i<liste.length;i++){
+				zwischen=zwischen+(Number(liste[i])-mittel)*(Number(liste[i])-mittel);
+			}
+			
+			//alert("zwischen: "+zwischen);
+			zwischen=zwischen/(liste.length-1);
+			
+			return Math.sqrt(zwischen);
+		}
 
 
 	</script>
@@ -112,11 +178,11 @@
 			<form>
 				<label>
                     Startdatum
-                    <input name="startdatum" value="2015-11-01" type="date" ng-model="startdatum">
+                    <input name="startdatum" value="2015-12-01" type="date" ng-model="startdatum">
                 </label>
                 <label>
                 	Enddatum
-                	<input name="enddatum" value="2016-01-02" type="date" ng-model="enddatum">
+                	<input name="enddatum" value="2016-01-17" type="date" ng-model="enddatum">
                 </label>
 				<label>
 					Name
@@ -142,8 +208,10 @@
 					</tr>
 				</table>
 			</form>
+			
 			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
-	 		<p>Volatilit√§t: {{volatilitaet() | prozent}}</p>
+	 		<p>Volatilit‰t: {{volatilitaet() | prozent}}</p>
+			<p>Autokorrelation: {{autokorrelation() | prozent}}</p>
 			
 			<h3>Aktienkurse</h3>	
 			

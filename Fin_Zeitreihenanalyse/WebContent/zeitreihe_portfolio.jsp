@@ -17,9 +17,14 @@
 		app.controller('testController', function($scope,$http) {
 			$scope.names1;
 			$scope.names2;
+			
+			$scope.name1="msft";
+			$scope.name2="goog";
+			$scope.gewichtung1="50";
+			$scope.gewichtung2="50";
+			
 			$scope.names_portfolio = [];
 			$scope.abrufen_portfolio = function() {
-				$scope.names_portfolio = [];
 				var start = formattedDate($scope.startdatum);
 				var ende = 	formattedDate($scope.enddatum);				
 						
@@ -59,7 +64,7 @@
 							//Element mit Gewichtung entsprechenden Werte erzeugen und zum Array names_portfolio hinzufügen
 							var element = {};
 							element.Date = $scope.names1[index1].Date;
-							element.Adj_Close = (($scope.names1[index1].Adj_Close * ($scope.gewichtung1/100)) + ($scope.names2[index2].Adj_Close * ($scope.gewichtung2/100)));							
+							element.Adj_Close = (($scope.names1[index1].Adj_Close * ($scope.gewichtung1/100)) + ($scope.names2[index2].Adj_Close * ($scope.gewichtung2/100)));
 							$scope.names_portfolio.push(element);
 							//Beide Werte werden inkrementiert
 							increment1 = true;
@@ -89,9 +94,10 @@
 							increment2 = false;
 						}
 						
-					}
-				}
-			};
+					}//while
+				}//else(Also gewichtung Passt)
+			};//function create Portfolio
+			
 			
 			//Berechnung des durchschnittlichen Rendite des AdjustedClose
 			$scope.durchschnRend = function(){
@@ -109,24 +115,91 @@
 				var standAbwKumuliert=0;
 				for(var i=$scope.names_portfolio.length-2;i>=0;i--){
 					standAbwKumuliert += (Math.log(Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close))-durchschnRend)*(Math.log(Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close))-durchschnRend);
-					
+					//alert("i: "+i+", Rendite vom "+$scope.names[i].Date+" und "+$scope.names[i+1].Date+": "+(Math.log(Number($scope.names[i].Adj_Close)/Number($scope.names[i+1].Adj_Close))-durchschnRend)*(Math.log(Number($scope.names[i].Adj_Close)/Number($scope.names[i+1].Adj_Close))-durchschnRend));
 				}
-				
+				//alert("summe Varianzen: "+ standAbwKumuliert);
 				standAbwKumuliert=standAbwKumuliert/($scope.names_portfolio.length - 2);
-				
+				//alert("summe Varianzen/anz-1: "+ standAbwKumuliert);
 				standAbwKumuliert = Math.sqrt(standAbwKumuliert);
 				
 				
 				return standAbwKumuliert;
-			}		
-		
-			//Array aller Renditen berechnen
-			$scope.renditen = function() {
-				var renditen = [];
-				for (var i = $scope.names_portfolio.length-2 ;i >= 0; i--){
-					renditen.push(Math.log( Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close) ));
+			}
+			
+			//Berechnung der Autokorrelation
+			$scope.autokorrelation = function(){
+				
+				if($scope.names_portfolio==null)
+					return 0;
+			
+				var aktienNormal = [];
+				var aktienVersetzt = [];//um eins zeitversetzt
+				var kovarianzBeider = [];
+				
+				for(var i=0;i<$scope.names_portfolio.length-1;i++){
+					aktienNormal.push($scope.names_portfolio[i].Adj_Close);
 				}
- 				return renditen;				
+				
+				for(var i=1;i<$scope.names_portfolio.length;i++){
+					aktienVersetzt.push($scope.names_portfolio[i].Adj_Close);
+				}
+				
+				var mittwertNormal = mittelwert(aktienNormal);
+				var mittwertVersetzt = mittelwert(aktienVersetzt);
+				
+				for(var i=0;i<aktienVersetzt.length;i++){
+					kovarianzBeider.push((aktienNormal[i]-mittwertNormal)*(aktienVersetzt[i]-mittwertVersetzt));
+				}
+				
+				
+				
+				return mittelwert(kovarianzBeider)/(stdAbw(aktienNormal)*stdAbw(aktienVersetzt));
+			}
+			
+			
+			//Berechnung der Kovarianzmatrix
+			$scope.kovarianzmatrix = function(){
+				
+				if($scope.names1==null)
+					return " Keine Kovarianz erstellbar!";
+				
+				
+				var rueckgabe="Aktie 1 mit 1: ";
+				
+				var aktie1 = [];
+				var aktie2 = [];//um eins zeitversetzt
+				var kovarianz1 = [];
+				var kovarianz2 = [];
+				var kovarianz12 = [];
+				var kovarianz21 = [];
+				
+				var probe=0;
+				
+				for(var i=$scope.names1.length-1;i>=0;i--){
+					aktie1.push($scope.names1[i].Adj_Close);
+				}
+				
+				for(var i=$scope.names2.length-1;i>=0;i--){
+					aktie2.push($scope.names2[i].Adj_Close);
+				}
+				
+
+				var aktie1Mwt = mittelwert(aktie1);
+				var aktie2Mwt = mittelwert(aktie2);
+
+				
+				for(var i=0;i<aktie1.length;i++){
+					kovarianz1.push((aktie1[i]-aktie1Mwt)*(aktie1[i]-aktie1Mwt));
+					kovarianz2.push((aktie2[i]-aktie2Mwt)*(aktie2[i]-aktie2Mwt));
+					kovarianz12.push((aktie1[i]-aktie1Mwt)*(aktie2[i]-aktie2Mwt));
+					kovarianz21.push((aktie2[i]-aktie2Mwt)*(aktie1[i]-aktie1Mwt));
+				}
+				
+				rueckgabe = rueckgabe + mittelwert(kovarianz1)+", Aktie 2 mit 2: "+mittelwert(kovarianz2)+", Aktie 1 mit 2: "+mittelwert(kovarianz12)+", Aktie 2 mit 1: "+mittelwert(kovarianz21);
+				
+				alert(rueckgabe);
+				
+				return rueckgabe;
 			}
 			
 			
@@ -137,8 +210,6 @@
 		        return $filter('number')(input*100, 2)+'%';
 		    }
 		});
-		
-		
 		
 		function formattedDate(date) {
 	    	var d = new Date(date || Date.now()),
@@ -151,6 +222,40 @@
 		
 		    return [year, month, day].join('-');
 		}
+		
+		//Berechnung des Mittelwertes
+		function mittelwert(liste){
+			if(liste==null)
+				return 0;	
+			
+			var durchschnitt=0;
+			
+			for(var i=0;i<liste.length;i++){
+				durchschnitt+=Number(liste[i]);
+			}
+			durchschnitt = durchschnitt/liste.length;
+			return durchschnitt;
+		}
+
+		//Berechnung der Standardabw
+		function stdAbw(liste){
+			
+			if(liste==null)
+				return 0;	
+			
+			var zwischen=0;
+			var mittel=mittelwert(liste);
+			
+			for(var i=0;i<liste.length;i++){
+				zwischen=zwischen+(Number(liste[i])-mittel)*(Number(liste[i])-mittel);
+			}
+			
+			//alert("zwischen: "+zwischen);
+			zwischen=zwischen/(liste.length-1);
+			
+			return Math.sqrt(zwischen);
+		}
+		
 
 
 	</script>
@@ -163,7 +268,7 @@
 
 	<div class="container theme-showcase" ng-controller="testController">
 		<div class="jumbotron">
-			<form >
+			<form>
 				<table class="table">
 					<tr>
 						<td>
@@ -216,26 +321,14 @@
 						<td colspan="2" style="text-align:center;border:1px solid red">
 							Wichtig! : Gewichtung 1 + Gewichtung 2 = 100!	
 						</td>
-					</tr>					
-				</table>				
-			</form>
-			<form action="MainServlet" method="get">
-				<input type="hidden" name="renditen" value="{{renditen()}}">
-				<input type="hidden" name="standardabweichung" value="{{volatilitaet()}}">
-				<input type="hidden" name="erwartungswert" value="{{durchschnRend()}}">
-				<table class="table">
-					<tr>
-						<td style="text-align:center">
-							<button  style="width:100%" class="btn-success"">
-								Auf Normalverteilung prüfen						
-							</button>
-						</td>
 					</tr>
-				</table>
+				</table>		
 			</form>
 			
-			<p>Durchschnittsrendite des Portfolios: {{durchschnRend() | prozent}}</p>
-	 		<p>Volatilität des Portfolios: {{volatilitaet() | prozent}}</p>
+			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
+	 		<p>Volatilität: {{volatilitaet() | prozent}}</p>
+			<p>Autokorrelation: {{autokorrelation() | prozent}}</p>
+			<p>Kovarianzmatrix: {{kovarianzmatrix()}}</p>
 			
 			<h3>Aktienkurse für das Portfolio</h3>	
 			
@@ -251,6 +344,7 @@
 					<td>{{x.Adj_Close | currency}}</td>					
 			    </tr>
 	 		</table> 	
+	 		
 		</div>
 	</div>
 
