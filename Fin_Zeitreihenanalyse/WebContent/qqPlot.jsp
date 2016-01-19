@@ -33,7 +33,7 @@
         </div>
         <div class="row demofooter">
 			<div class="col-md-12">
-				<a href="#/">Zurück zum Hauptmenü</a><br/>
+				<a href="index.jsp">Zurück zum Hauptmenü</a><br/>
 				<a href="zeitreihe_einzeln.jsp">Aktienkurse abrufen</a><br>
 				<a href ="zeitreihe_portfolio.jsp">Portfolio erstellen</a>
 			</div>		
