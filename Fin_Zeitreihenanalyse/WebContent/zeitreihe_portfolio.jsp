@@ -20,8 +20,8 @@
 			
 			$scope.name1="msft";
 			$scope.name2="goog";
-			$scope.gewichtung1="50";
-			$scope.gewichtung2="50";
+			$scope.gewichtung1=50;
+			$scope.gewichtung2=50;
 			
 			$scope.names_portfolio = [];
 			$scope.abrufen_portfolio = function() {
@@ -32,13 +32,14 @@
 				.then(
 					function(response1) {
 						$scope.names1 = response1.data.query.results.quote;
-
+	alert("Names1.length: " + $scope.names1.length);	
 						$http.get("https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.historicaldata%20where%20symbol%20%3D%20%22"+$scope.name2+"%22%20and%20startDate%20%3D%20%22"+start+"%22%20and%20endDate%20%3D%20%22"+ende+"%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=")
 						.then(
 							function(response2) {
 								$scope.names2 = response2.data.query.results.quote;
-								
+	alert("Names2.length: " + $scope.names2.length);								
 								$scope.create_portfolio();
+	alert("Portfolio.length: " + $scope.names_portfolio.length);								
 							}
 						);
 					}
@@ -46,6 +47,8 @@
 				
 			};
 			$scope.create_portfolio = function() {
+				$scope.names_portfolio = [];
+
 				if(($scope.gewichtung1 + $scope.gewichtung2) != 100) {
 					alert("Gewichtung 1 + Gewichtung 2 muss genau 100 sein!");
 				} else {				
@@ -71,24 +74,24 @@
 							increment2 = true;
 							
 						} else if(date1 > date2) { //Das spätere Datum ist größer
-							alert($scope.name1 + " wurde an dem Datum, " + $scope.names1[index1].Date + ", nicht gehandelt");
+							alert($scope.name2 + " wurde an dem Datum, " + $scope.names1[index1].Date + ", nicht gehandelt");
 							increment1 = true;
 						} else {
-							alert($scope.name2 + " wurde an dem Datum, " + $scope.names2[index2].Date + ", nicht gehandelt");
+							alert($scope.name1 + " wurde an dem Datum, " + $scope.names2[index2].Date + ", nicht gehandelt");
 							increment2 = true;
 						}
 						
 						//Inkrementierung der Werte und Abbruch der Schleife bei Auslaufen einer Zeitreihe
 						if(increment1 == true){
 							index1++;
-							if(index1 >= ($scope.names1.length-1) ) {
+							if(index1 > ($scope.names1.length-1) ) {
 								fertig = true;
 							}
 							increment1 = false;
 						}						
 						if(increment2 == true){
 							index2++;
-							if(index2 >= ($scope.names2.length-1) ) {
+							if(index2 > ($scope.names2.length-1) ) {
 								fertig = true;
 							}
 							increment2 = false;
@@ -156,6 +159,13 @@
 				return mittelwert(kovarianzBeider)/(stdAbw(aktienNormal)*stdAbw(aktienVersetzt));
 			}
 			
+			$scope.renditen = function() {
+				var renditen = [];
+				for (var i = $scope.names_portfolio.length-2 ;i >= 0; i--){
+					renditen.push(Math.log( Number($scope.names_portfolio[i].Adj_Close)/Number($scope.names_portfolio[i+1].Adj_Close) ));
+				}
+ 				return renditen;				
+			}
 			
 			//Berechnung der Kovarianzmatrix
 			$scope.kovarianzmatrix = function(){
@@ -196,8 +206,6 @@
 				}
 				
 				rueckgabe = rueckgabe + mittelwert(kovarianz1)+", Aktie 2 mit 2: "+mittelwert(kovarianz2)+", Aktie 1 mit 2: "+mittelwert(kovarianz12)+", Aktie 2 mit 1: "+mittelwert(kovarianz21);
-				
-				alert(rueckgabe);
 				
 				return rueckgabe;
 			}
@@ -323,6 +331,21 @@
 						</td>
 					</tr>
 				</table>		
+			</form>
+			
+			<form action="MainServlet" method="get">
+				<input type="hidden" name="renditen" value="{{renditen()}}">
+				<input type="hidden" name="standardabweichung" value="{{volatilitaet()}}">
+				<input type="hidden" name="erwartungswert" value="{{durchschnRend()}}">
+				<table class="table">
+					<tr>
+						<td style="text-align:center">
+							<button  style="width:100%" class="btn-success"">
+								Auf Normalverteilung prüfen						
+							</button>
+						</td>
+					</tr>
+				</table>
 			</form>
 			
 			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
