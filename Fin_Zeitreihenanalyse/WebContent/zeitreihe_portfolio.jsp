@@ -139,7 +139,9 @@
 				var aktienVersetzt = [];//um eins zeitversetzt
 				var kovarianzBeider = [];
 				
-				for(var i=0;i<$scope.names_portfolio.length-1;i++){
+				
+				
+				for(var i=0;i<$scope.names_portfolio.length-1;i++){ //letztes Element wird abgeschnitten
 					aktienNormal.push($scope.names_portfolio[i].Adj_Close);
 				}
 				
@@ -147,16 +149,25 @@
 					aktienVersetzt.push($scope.names_portfolio[i].Adj_Close);
 				}
 				
+				
+				
 				var mittwertNormal = mittelwert(aktienNormal);
 				var mittwertVersetzt = mittelwert(aktienVersetzt);
 				
+				var summeKovarianz = 0;
+				var summeVarianz1 = 0;//portfolioNormal
+				var summeVarianz2 = 0;//portfolioVersetzt
+				
 				for(var i=0;i<aktienVersetzt.length;i++){
 					kovarianzBeider.push((aktienNormal[i]-mittwertNormal)*(aktienVersetzt[i]-mittwertVersetzt));
+					summeKovarianz = summeKovarianz + (aktienNormal[i]-mittwertNormal)*(aktienVersetzt[i]-mittwertVersetzt);
+					summeVarianz1 = summeVarianz1 + (aktienNormal[i]-mittwertNormal)*(aktienNormal[i]-mittwertNormal);
+					summeVarianz2 = summeVarianz2 + (aktienVersetzt[i]-mittwertVersetzt)*(aktienVersetzt[i]-mittwertVersetzt);
 				}
 				
+				var erg = summeKovarianz/Math.sqrt(summeVarianz1*summeVarianz2); 
 				
-				
-				return mittelwert(kovarianzBeider)/(stdAbw(aktienNormal)*stdAbw(aktienVersetzt));
+				return erg;
 			}
 			
 			$scope.renditen = function() {
@@ -167,7 +178,7 @@
  				return renditen;				
 			}
 			
-			//Berechnung der Kovarianzmatrix
+//Berechnung der Kovarianzmatrix
 			$scope.kovarianzmatrix = function(){
 				
 				if($scope.names1==null)
@@ -205,7 +216,83 @@
 					kovarianz21.push((aktie2[i]-aktie2Mwt)*(aktie1[i]-aktie1Mwt));
 				}
 				
-				rueckgabe = rueckgabe + mittelwert(kovarianz1)+", Aktie 2 mit 2: "+mittelwert(kovarianz2)+", Aktie 1 mit 2: "+mittelwert(kovarianz12)+", Aktie 2 mit 1: "+mittelwert(kovarianz21);
+				rueckgabe = rueckgabe + Runden2Dezimal(mittelwert(kovarianz1))+", Aktie 2 mit 2: "+Runden2Dezimal(mittelwert(kovarianz2));
+				rueckgabe = rueckgabe + ", Aktie 1 mit 2: "+Runden2Dezimal(mittelwert(kovarianz12))+", Aktie 2 mit 1: "+Runden2Dezimal(mittelwert(kovarianz21));
+				
+				return rueckgabe;
+			}
+			
+			
+	//Berechnung des Korrelationskoeffizienten
+			$scope.korrelation = function(){
+				
+				if($scope.names1==null)
+					return "Kein Korrelationskoeffizient erstellbar!";
+				
+			//Definieren	
+				var rueckgabe="";
+				
+				var aktie1 = [];
+				var aktie2 = [];//um eins zeitversetzt
+				var aktieGesamt = [];
+				var kovarianz1 = [];
+				var kovarianz2 = [];
+				
+				var summeVarianz1 = 0;
+				var summeVarianz2 = 0;
+				var summeVarianzPort = 0;
+				var summeKovarianz1 = 0;
+				var summeKovarianz2 = 0;
+				
+				var probe=0;
+				
+				
+				
+			//Arrays füllen
+				for(var i=$scope.names1.length-1;i>=0;i--){
+					aktie1.push($scope.names1[i].Adj_Close);
+				}
+				for(var i=$scope.names2.length-1;i>=0;i--){
+					aktie2.push($scope.names2[i].Adj_Close);
+				}
+				for(var i=$scope.names2.length-1;i>=0;i--){
+					aktieGesamt.push($scope.names_portfolio[i].Adj_Close);
+				}
+				
+				//alert($scope.names_portfolio.length + ", " + $scope.names1.length + ", "+  $scope.names2.length);
+				
+			//Mittelwerte berechnen
+				var aktie1Mwt = mittelwert(aktie1);
+				var aktie2Mwt = mittelwert(aktie2);
+				var aktieGesMwt = mittelwert(aktieGesamt);
+				
+				
+			//SummenVarianzen ermitteln
+				for(var i=0;i<aktieGesamt.length;i++){ // Gesamt ist um eines kürzer!!!!!!!!!!!!!!
+					summeVarianz1 = summeVarianz1 + (aktie1[i]-aktie1Mwt)*(aktie1[i]-aktie1Mwt);
+					summeVarianz2 = summeVarianz2 + (aktie2[i]-aktie2Mwt)*(aktie2[i]-aktie2Mwt);
+					summeVarianzPort = summeVarianzPort + (aktieGesamt[i]-aktieGesMwt)*(aktieGesamt[i]-aktieGesMwt);
+					
+					
+					summeKovarianz1 = summeKovarianz1 + ( (aktie1[i]-aktie1Mwt)*(aktieGesamt[i]-aktieGesMwt) );
+					//alert("summeKovarianz1="+summeKovarianz1+"+( ( "+aktie1[i]+"-"+aktie1Mwt+")*("+aktieGesamt[i]+"-"+aktieGesMwt+") )");
+					summeKovarianz2 = summeKovarianz2 + ( (aktie2[i]-aktie2Mwt)*(aktieGesamt[i]-aktieGesMwt) );
+					kovarianz1.push((aktie1[i]-aktie1Mwt)*(aktieGesamt[i]-aktieGesMwt));
+					kovarianz2.push((aktie2[i]-aktie2Mwt)*(aktieGesamt[i]-aktieGesMwt));
+				}
+				
+				//alert("MWT: "+aktie1Mwt+", "+aktie2Mwt+", "+aktieGesMwt+"\nSumme Var: "+summeVarianz1+", "+summeVarianz2+", "+summeVarianzPort+"\nKovarsumme"+summeKovarianz1+", "+summeKovarianz2);
+				
+			//Korrelationskoeffizienten berechnen
+				var korrel1 = summeKovarianz1/(Math.sqrt(summeVarianz1*summeVarianzPort)); //korrelation Aktie1 mit Portfolio
+				var korrel2 = summeKovarianz2/(Math.sqrt(summeVarianz2*summeVarianzPort)); //korrelation Aktie2 mit Portfolio
+				
+				
+				//rueckgabe = rueckgabe+"SummenKovarianz1= "+summeKovarianz1+", SummenKovarianz2= "+summeKovarianz2+"\n";
+				rueckgabe = rueckgabe+"Korrelation Aktie "+$scope.name1+" mit Portfolio = "+korrel1+"; Korrelation Aktie "+$scope.name2+" mit Portfolio = "+korrel2;
+				
+
+				//alert(rueckgabe);
 				
 				return rueckgabe;
 			}
@@ -264,7 +351,10 @@
 			return Math.sqrt(zwischen);
 		}
 		
-
+		function Runden2Dezimal(x) {
+			var Ergebnis = Math.round(x * 100) / 100 ;
+			return Ergebnis;
+		}
 
 	</script>
 		
@@ -340,7 +430,7 @@
 				<table class="table">
 					<tr>
 						<td style="text-align:center">
-							<button  style="width:100%" class="btn-success"">
+							<button  style="width:100%" class="btn-success">
 								Auf Normalverteilung prüfen						
 							</button>
 						</td>
@@ -348,10 +438,11 @@
 				</table>
 			</form>
 			
-			<p>Durchschnittsrend.: {{durchschnRend() | prozent}}</p>
-	 		<p>Volatilität: {{volatilitaet() | prozent}}</p>
-			<p>Autokorrelation: {{autokorrelation() | prozent}}</p>
+			<p>Durchschnittsrendite des Portfolios: {{durchschnRend() | prozent}}</p>
+	 		<p>Volatilität des Portfolios: {{volatilitaet() | prozent}}</p>
+			<p>Autokorrelation des Portfolios (um einen Tag verschoben): {{autokorrelation() | prozent}}</p>
 			<p>Kovarianzmatrix: {{kovarianzmatrix()}}</p>
+			<p>Korrelation: {{korrelation()}}</p>
 			
 			<h3>Aktienkurse für das Portfolio</h3>	
 			
