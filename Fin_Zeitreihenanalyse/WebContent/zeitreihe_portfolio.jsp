@@ -420,7 +420,7 @@
 			return durchschnitt;
 		}
 
-		//Berechnung der Standardabw
+		//Berechnung der Standardabw der Grundgesamtheit(durch n)
 		function stdAbw(liste){
 			
 			if(liste==null)
@@ -434,7 +434,7 @@
 			}
 			
 			//alert("zwischen: "+zwischen);
-			zwischen=zwischen/(liste.length-1);
+			zwischen=zwischen/(liste.length);
 			
 			return Math.sqrt(zwischen);
 		}
