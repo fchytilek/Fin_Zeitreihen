@@ -298,6 +298,94 @@
 			}
 			
 			
+	//Berechnung des BetaWertes
+			$scope.beta = function(){
+				
+				if($scope.names1==null)
+					return "Kein Beta-Wert erstellbar!";
+				
+			//Definieren	
+				var rueckgabe="";
+				
+				var aktie1 = [];
+				var aktie2 = [];//um eins zeitversetzt
+				var aktieGesamt = [];
+				var kovarianz1 = []; //Kovarianz Aktie1 mit Portfolio
+				var kovarianz2 = []; //Kovarianz Aktie3 mit Portfolio
+				var varianzPort = [];
+				
+				var rendite1 = [];
+				var rendite2 = [];
+				var renditePort = [];
+				
+				var summeVarianz1 = 0;
+				var summeVarianz2 = 0;
+				var summeVarianzPort = 0;
+				var summeKovarianz1 = 0;
+				var summeKovarianz2 = 0;
+				
+				var probe=0;
+				
+				
+				
+			//Arrays füllen
+				for(var i=$scope.names1.length-1;i>=0;i--){
+					aktie1.push($scope.names1[i].Adj_Close);
+				}
+				for(var i=$scope.names2.length-1;i>=0;i--){
+					aktie2.push($scope.names2[i].Adj_Close);
+				}
+				for(var i=$scope.names2.length-1;i>=0;i--){
+					aktieGesamt.push($scope.names_portfolio[i].Adj_Close);
+				}
+				
+				//alert($scope.names_portfolio.length + ", " + $scope.names1.length + ", "+  $scope.names2.length);
+				for(var i=0;i<aktie1.length-1;i++){
+					rendite1.push(Math.log(aktie1[i]/aktie1[i+1]));
+					rendite2.push(Math.log(aktie2[i]/aktie2[i+1]));
+					renditePort.push(Math.log(aktieGesamt[i]/aktieGesamt[i+1]));
+				}
+				
+				
+			//Mittelwerte berechnen
+				var aktie1Mwt = mittelwert(rendite1);
+				var aktie2Mwt = mittelwert(rendite2);
+				var aktieGesMwt = mittelwert(renditePort);
+				
+				
+				
+			//SummenVarianzen ermitteln
+				for(var i=0;i<renditePort.length;i++){ // Gesamt ist um eines kürzer!!!!!!!!!!!!!!
+					summeVarianz1 = summeVarianz1 + (rendite1[i]-aktie1Mwt)*(rendite1[i]-aktie1Mwt);
+					summeVarianz2 = summeVarianz2 + (rendite2[i]-aktie2Mwt)*(rendite2[i]-aktie2Mwt);
+					summeVarianzPort = summeVarianzPort + (renditePort[i]-aktieGesMwt)*(renditePort[i]-aktieGesMwt);
+					
+					
+					summeKovarianz1 = summeKovarianz1 + ( (rendite1[i]-aktie1Mwt)*(renditePort[i]-aktieGesMwt) );
+				
+					summeKovarianz2 = summeKovarianz2 + ( (rendite2[i]-aktie2Mwt)*(renditePort[i]-aktieGesMwt) );
+					
+					varianzPort.push((renditePort[i]-aktieGesMwt)*(renditePort[i]-aktieGesMwt))
+					kovarianz1.push((rendite1[i]-aktie1Mwt)*(renditePort[i]-aktieGesMwt));
+					kovarianz2.push((rendite2[i]-aktie2Mwt)*(renditePort[i]-aktieGesMwt));
+				}
+			
+				var beta1 = mittelwert(kovarianz1)/mittelwert(varianzPort); //korrelation Aktie1 mit Portfolio
+				var beta2 = mittelwert(kovarianz2)/mittelwert(varianzPort); //korrelation Aktie2 mit Portfolio
+				
+				
+				//rueckgabe = rueckgabe+"SummenKovarianz1= "+summeKovarianz1+", SummenKovarianz2= "+summeKovarianz2+"\n";
+				rueckgabe = "Beta von "+$scope.name1+" mit Portfolio: "+beta1+", "+$scope.name2+" mit Portfolio: "+beta2;
+				
+
+				//alert(rueckgabe);
+				
+				return rueckgabe;
+			}
+			
+	
+			
+			
 		});//app.controller
 		
 		app.filter('prozent', function($filter) {
